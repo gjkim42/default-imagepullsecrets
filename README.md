@@ -13,6 +13,28 @@ install.
 
 **Deploy default-imagepullsecrets**
 ```sh
+export VERSION=latest
 export DEFAULT_IMAGEPULLSECRETS="mysecret0,my-secret1"
 envsubst < default-imagepullsecrets.yaml | kubectl apply -f -
+
+# Wait for default-imagepullsecrets to be rollout
+kubectl rollout status -n default-imagepullsecrets deployment default-imagepullsecrets
+
+kubectl apply -f mutating-webhook-configuration.yaml
+```
+
+```sh
+# Run a test pod
+kubectl run test --image=nginx
+# Make sure that default imagePullSecrets are applied
+kubectl get pods test -o jsonpath='{.spec.imagePullSecrets}{"\n"}'
+```
+
+**Clean up**
+```sh
+kubectl delete -f mutating-webhook-configuration.yaml
+
+export VERSION=v0.1.0
+export DEFAULT_IMAGEPULLSECRETS="mysecret0,my-secret1"
+envsubst < default-imagepullsecrets.yaml | kubectl delete -f -
 ```
