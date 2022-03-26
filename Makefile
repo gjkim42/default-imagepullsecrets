@@ -5,6 +5,14 @@ GO_VERSION?=1.17
 OS_CODENAME?=bullseye
 OUTPUT_DIR?=_output
 
+.PHONY: verify
+verify:
+	hack/verify.sh
+
+.PHONY: update
+update:
+	hack/update.sh
+
 .PHONY: build
 build:
 	go build -o ${OUTPUT_DIR}/default-imagepullsecrets ./cmd/default-imagepullsecrets
