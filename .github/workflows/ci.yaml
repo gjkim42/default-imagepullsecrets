@@ -11,6 +11,10 @@ on:
 env:
   GO_VERSION: '1.17'
 
+concurrency:
+  group: ci
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -40,3 +44,48 @@ jobs:
         with:
           fetch-depth: 0
       - run: make image
+
+  test-e2e:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set VERSION and deploy the test image
+      run: |
+        echo "VERSION=${VERSION}" >> $GITHUB_ENV
+        echo VERSION ${VERSION}
+        make image VERSION=${VERSION}
+        docker login -u gjkim42 -p "${DOCKER_SECRET}"
+        make push VERSION=${VERSION}
+      env:
+        DOCKER_SECRET: ${{ secrets.GJKIM42_DOCKER_PASSWORD }}
+        VERSION: "test-e2e"
+
+    - uses: helm/kind-action@v1.2.0
+
+    - name: Install cert-manager
+      run: |
+        kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERTMANAGER_VERSION}/cert-manager.yaml
+        kubectl rollout status -n cert-manager deployment cert-manager-webhook
+      env:
+        CERTMANAGER_VERSION: "v1.7.2"
+
+    - name: Set DEFAULT_IMAGEPULLSECRETS and deploy default-imagepullsecrets
+      run: |
+        echo "DEFAULT_IMAGEPULLSECRETS=${DEFAULT_IMAGEPULLSECRETS}" >> $GITHUB_ENV
+        envsubst < default-imagepullsecrets.yaml | kubectl apply -f -
+        kubectl rollout status -n default-imagepullsecrets deployment default-imagepullsecrets
+        kubectl apply -f mutating-webhook-configuration.yaml
+      env:
+        DEFAULT_IMAGEPULLSECRETS: "mysecret0,my-secret1"
+
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: e2e test
+      run: |
+        go install github.com/onsi/ginkgo/v2/ginkgo@latest
+        ginkgo ./test/e2e -- \
+          --kubeconfig=${HOME}/.kube/config \
+          --image-pull-secrets=${DEFAULT_IMAGEPULLSECRETS}

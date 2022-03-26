@@ -1,4 +1,4 @@
-VERSION=$(shell if [ -d .git ]; then git describe --tags --dirty; else echo "unknown"; fi)
+VERSION?=$(shell if [ -d .git ]; then git describe --tags --dirty; else echo "unknown"; fi)
 REGISTRY?=gjkim42
 BASEIMAGE=gcr.io/distroless/static-debian11
 GO_VERSION?=1.17
@@ -11,7 +11,7 @@ build:
 
 .PHONY: test
 test:
-	go test -race ./...
+	hack/make-rules/test.sh $(WHAT)
 
 .PHONY: image
 image:
@@ -22,3 +22,7 @@ image:
 		--build-arg BASEIMAGE=${BASEIMAGE} \
 		--build-arg OUTPUT_DIR=${OUTPUT_DIR} \
 		.
+
+.PHONY: push
+push:
+	docker push ${REGISTRY}/default-imagepullsecrets:${VERSION}
