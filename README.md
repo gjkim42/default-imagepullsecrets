@@ -13,7 +13,7 @@ installed cert-manager before you start.
 
 ### Deploy default-imagepullsecrets
 ```sh
-export VERSION=v0.1.1
+export VERSION=latest
 export DEFAULT_IMAGEPULLSECRETS="mysecret0,my-secret1"
 envsubst < default-imagepullsecrets.yaml | kubectl apply -f -
 
