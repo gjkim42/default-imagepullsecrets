@@ -2,16 +2,21 @@ package main
 
 import (
 	"crypto/tls"
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 
 	"github.com/gjkim42/default-imagepullsecrets/pkg/admission"
+	"github.com/go-logr/logr"
 	"github.com/spf13/cobra"
+	"k8s.io/klog/v2"
+	"k8s.io/klog/v2/klogr"
 )
 
 func main() {
+
 	checkErr(os.Stderr, NewDefaultImagePullSecretsCommand().Execute())
 }
 
@@ -23,7 +28,9 @@ func checkErr(w io.Writer, err error) {
 }
 
 func NewDefaultImagePullSecretsCommand() *cobra.Command {
-	options := &DefaultImagePullSecretsOptions{}
+	options := &DefaultImagePullSecretsOptions{
+		log: klogr.New(),
+	}
 	certFile := "tls.crt"
 	keyFile := "tls.key"
 	bindAddress := "0.0.0.0"
@@ -37,6 +44,8 @@ func NewDefaultImagePullSecretsCommand() *cobra.Command {
 		},
 	}
 
+	klog.InitFlags(nil)
+	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 	cmd.Flags().StringVar(&certFile, "cert-file", certFile, "File containing the default Certificate for HTTPS.")
 	cmd.Flags().StringVar(&keyFile, "key-file", keyFile, "File containing the default Key for HTTPS.")
 	cmd.Flags().StringVar(&bindAddress, "bind-address", bindAddress, "The address on which to listen for the webhook's server")
@@ -47,6 +56,8 @@ func NewDefaultImagePullSecretsCommand() *cobra.Command {
 }
 
 type DefaultImagePullSecretsOptions struct {
+	log logr.Logger
+
 	Address   string
 	TLSConfig *tls.Config
 
@@ -68,7 +79,7 @@ func (o *DefaultImagePullSecretsOptions) Complete(certFile, keyFile, bindAddress
 }
 
 func (o *DefaultImagePullSecretsOptions) Run() error {
-	http.Handle("/webhook", admission.NewController(o.ImagePullSecrets))
+	http.Handle("/webhook", admission.NewController(o.log.WithName("admission"), o.ImagePullSecrets))
 	http.HandleFunc("/readyz", func(w http.ResponseWriter, req *http.Request) { w.Write([]byte("ok")) })
 
 	server := &http.Server{
