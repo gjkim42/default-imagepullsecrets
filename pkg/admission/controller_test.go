@@ -9,6 +9,7 @@ import (
 	v1 "k8s.io/api/admission/v1"
 	"k8s.io/api/admission/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2/klogr"
 )
 
 func TestAdmit(t *testing.T) {
@@ -47,14 +48,14 @@ func TestAdmit(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run("v1 "+tc.desc, func(t *testing.T) {
-			c := NewController(nil)
+			c := NewController(klogr.New(), nil)
 			res := c.admit(tc.review)
 			if res.Allowed != tc.allowed {
 				t.Errorf("expected %v, got %v", tc.allowed, res.Allowed)
 			}
 		})
 		t.Run("v1beta1 "+tc.desc, func(t *testing.T) {
-			c := NewController(nil)
+			c := NewController(klogr.New(), nil)
 			res := c.admitV1beta1(v1beta1.AdmissionReview{
 				Request: convertAdmissionRequestToV1beta1(tc.review.Request),
 			})
