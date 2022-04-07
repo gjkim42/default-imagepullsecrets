@@ -35,7 +35,7 @@ kubectl get pods test -o jsonpath='{.spec.imagePullSecrets}{"\n"}'
 ```sh
 kubectl delete -f mutating-webhook-configuration.yaml
 
-export VERSION=v0.1.1
+export VERSION=latest
 export DEFAULT_IMAGEPULLSECRETS="mysecret0,my-secret1"
 envsubst < default-imagepullsecrets.yaml | kubectl delete -f -
 ```
