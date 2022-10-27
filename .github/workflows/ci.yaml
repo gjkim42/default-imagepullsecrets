@@ -84,7 +84,7 @@ jobs:
 
     - name: e2e test
       run: |
-        go install github.com/onsi/ginkgo/v2/ginkgo@latest
+        go install -mod=mod github.com/onsi/ginkgo/v2/ginkgo
         ginkgo ./test/e2e -- \
           --kubeconfig=${HOME}/.kube/config \
           --image-pull-secrets=${DEFAULT_IMAGEPULLSECRETS}
