@@ -9,7 +9,7 @@ require (
 	github.com/onsi/gomega v1.24.2
 	github.com/spf13/cobra v1.6.1
 	k8s.io/api v0.26.0
-	k8s.io/apimachinery v0.26.0
+	k8s.io/apimachinery v0.26.1
 	k8s.io/client-go v0.26.0
 	k8s.io/klog/v2 v2.80.1
 )
